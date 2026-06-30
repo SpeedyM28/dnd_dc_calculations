@@ -3,7 +3,7 @@
 A mobile‑friendly, client‑side web app for calculating dice‑pool success probabilities in Dungeons & Dragons (5e + homebrew).  
 Perfect for quick, at‑the‑table maths—no backend, no sign‑up, just open the URL.
 
-**Live demo:** `https://your-project.vercel.app` (replace with your actual Vercel URL after deployment)
+**Live demo:** `dnd-dc-calculations.vercel.app`
 
 ---
 
