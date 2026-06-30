@@ -1,0 +1,150 @@
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --input-bg: #ffffff;
+  --input-border: #ccc;
+  --result-bg: #f0f0f0;
+  --btn-reset-bg: #ddd;
+  --btn-reset-text: #333;
+  --divider: #ccc;
+}
+body.dark {
+  --bg: #1e1e1e;
+  --text: #e0e0e0;
+  --input-bg: #2a2a2a;
+  --input-border: #555;
+  --result-bg: #333;
+  --btn-reset-bg: #444;
+  --btn-reset-text: #ddd;
+  --divider: #555;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 450px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.2s, color 0.2s;
+}
+
+label, input, button, select {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+input, select, button {
+  font-size: 1rem;
+  padding: 0.5rem;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.checkbox-group input {
+  width: auto;
+  margin: 0;
+}
+
+.result {
+  margin-top: 1rem;
+  font-weight: bold;
+  background: var(--result-bg);
+  padding: 0.5rem;
+  border-radius: 5px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.reset-btn {
+  background: var(--btn-reset-bg);
+  color: var(--btn-reset-text);
+}
+
+/* Dark mode toggle */
+.dark-toggle {
+  position: fixed;               /* changed from absolute */
+  top: 1rem;
+  right: 1rem;
+  width: auto;
+  min-width: unset;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  color: var(--text);
+  z-index: 100;                  /* ensure it’s above everything */
+}
+
+.die-block {
+  margin-bottom: 1rem;
+}
+.die-block label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+.die-block select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--input-bg);
+}
+
+.adv-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.adv-row label {
+  flex: 1;
+  margin: 0;
+}
+.adv-row input {
+  width: 70px;
+  text-align: center;
+}
+
+.section-divider {
+  text-align: center;
+  margin: 1.5rem 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  opacity: 0.7;
+  border-top: 1px solid var(--divider);
+  padding-top: 0.75rem;
+}
+
+.disclaimer {
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  color: var(--text);
+  opacity: 0.6;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.button-row button {
+  flex: 1;
+}

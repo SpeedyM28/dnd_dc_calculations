@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D&D Probability Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <button class="dark-toggle" id="darkToggle" aria-label="Toggle dark mode">☀️</button>
+
+  <h2>Dice Pool Success Chance</h2>
+  
+  <label>Number of dice</label>
+  <input type="number" id="numDice" value="2" min="1" max="10" onchange="renderDiceInputs()">
+
+  <label>Modifier</label>
+  <input type="number" id="modifier" value="0">
+
+  <div id="diceInputsContainer"></div>
+
+  <label>Target number</label>
+  <input type="number" id="goal" value="15">
+
+  <div class="checkbox-group">
+    <input type="checkbox" id="nat1Fail">
+    <label for="nat1Fail">Natural 1 always fails <small>(first die only)</small></label>
+  </div>
+  <div class="checkbox-group">
+    <input type="checkbox" id="nat20Success">
+    <label for="nat20Success">Natural 20 always succeeds <small>(any die)</small></label>
+  </div>
+
+  <button onclick="compute()">Calculate success probability</button>
+  <div class="button-row">
+    <button class="reset-btn" onclick="resetAll()">Reset</button>
+    <button class="reset-btn" onclick="copyShareLink()">🔗 Copy link</button>
+  </div>
+  <div class="result" id="singleResult"></div>
+
+  <div class="section-divider">⬇️ Multi‑Attack uses the success probability from above ⬇️</div>
+
+  <h2>Multiple Attacks</h2>
+  <label>Number of attacks</label>
+  <input type="number" id="attacks" value="2" min="1">
+
+  <div class="adv-row">
+    <label for="attacksAdv">Attacks with advantage</label>
+    <input type="number" id="attacksAdv" value="0" min="0">
+  </div>
+  <div class="adv-row">
+    <label for="attacksDis">Attacks with disadvantage</label>
+    <input type="number" id="attacksDis" value="0" min="0">
+  </div>
+
+  <button onclick="computeMulti()">Calculate all‑attacks success</button>
+  <div class="result" id="multiResult"></div>
+
+  <div class="disclaimer">
+    ⚠️ Advantage / Disadvantage calculations apply to the entire dice pool's success probability<br>
+    (including modifiers and nat1/nat20 rules) rather than re‑rolling the largest die.<br>
+    This is an approximation when using mixed dice (e.g., d20 + d8).
+  </div>
+
+  <script>
+    // ---------- Constants ----------
+    const ALLOWED_SIDES = [20, 12, 10, 8, 6, 4];
+
+    // ---------- Dark mode ----------
+    const darkToggle = document.getElementById('darkToggle');
+    function setDarkMode(on) {
+      document.body.classList.toggle('dark', on);
+      darkToggle.textContent = on ? '🌙' : '☀️';
+      localStorage.setItem('darkMode', on ? '1' : '0');
+    }
+    darkToggle.addEventListener('click', () => {
+      setDarkMode(!document.body.classList.contains('dark'));
+    });
+    if (localStorage.getItem('darkMode') === '1') {
+      setDarkMode(true);
+    }
+
+    // ---------- URL sharing ----------
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        numDice: params.get('numDice'),
+        dice: params.get('dice'),
+        mod: params.get('mod'),
+        goal: params.get('goal'),
+        nat1: params.get('nat1'),
+        nat20: params.get('nat20'),
+        attacks: params.get('attacks'),
+        adv: params.get('adv'),
+        dis: params.get('dis')
+      };
+    }
+
+    function applyUrlParams() {
+      const p = getUrlParams();
+      if (p.numDice) document.getElementById('numDice').value = p.numDice;
+      if (p.mod) document.getElementById('modifier').value = p.mod;
+      if (p.goal) document.getElementById('goal').value = p.goal;
+      if (p.nat1) document.getElementById('nat1Fail').checked = (p.nat1 === '1');
+      if (p.nat20) document.getElementById('nat20Success').checked = (p.nat20 === '1');
+      if (p.attacks) document.getElementById('attacks').value = p.attacks;
+      if (p.adv) document.getElementById('attacksAdv').value = p.adv;
+      if (p.dis) document.getElementById('attacksDis').value = p.dis;
+
+      renderDiceInputs();
+      if (p.dice) {
+        const sides = p.dice.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        for (let i = 0; i < sides.length; i++) {
+          const sel = document.getElementById(`dieSides${i}`);
+          if (sel) sel.value = sides[i];
+        }
+      }
+    }
+
+    function copyShareLink() {
+      const numDice = document.getElementById('numDice').value;
+      const modifier = document.getElementById('modifier').value;
+      const goal = document.getElementById('goal').value;
+      const nat1 = document.getElementById('nat1Fail').checked ? '1' : '0';
+      const nat20 = document.getElementById('nat20Success').checked ? '1' : '0';
+      const attacks = document.getElementById('attacks').value;
+      const adv = document.getElementById('attacksAdv').value;
+      const dis = document.getElementById('attacksDis').value;
+
+      const num = parseInt(numDice) || 0;
+      const diceArr = [];
+      for (let i = 0; i < num; i++) {
+        const sel = document.getElementById(`dieSides${i}`);
+        if (sel) diceArr.push(sel.value);
+      }
+      const diceStr = diceArr.join(',');
+
+      const url = new URL(window.location.origin + window.location.pathname);
+      url.searchParams.set('numDice', numDice);
+      url.searchParams.set('dice', diceStr);
+      url.searchParams.set('mod', modifier);
+      url.searchParams.set('goal', goal);
+      url.searchParams.set('nat1', nat1);
+      url.searchParams.set('nat20', nat20);
+      url.searchParams.set('attacks', attacks);
+      url.searchParams.set('adv', adv);
+      url.searchParams.set('dis', dis);
+
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        prompt('Copy this link:', url.toString());
+      });
+    }
+
+    function renderDiceInputs() {
+      const numDice = parseInt(document.getElementById('numDice').value) || 1;
+      const container = document.getElementById('diceInputsContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < numDice; i++) {
+        const block = document.createElement('div');
+        block.className = 'die-block';
+
+        const label = document.createElement('label');
+        label.textContent = `Die ${i + 1}`;
+        label.setAttribute('for', `dieSides${i}`);
+
+        const select = document.createElement('select');
+        select.id = `dieSides${i}`;
+        ALLOWED_SIDES.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = `d${s}`;
+          select.appendChild(opt);
+        });
+        select.value = '20';
+
+        block.appendChild(label);
+        block.appendChild(select);
+        container.appendChild(block);
+      }
+    }
+
+    function getDiceSides() {
+      const numDice = parseInt(document.getElementById('numDice').value) || 0;
+      const sides = [];
+      for (let i = 0; i < numDice; i++) {
+        const select = document.getElementById(`dieSides${i}`);
+        if (select) sides.push(parseInt(select.value));
+      }
+      return sides;
+    }
+
+    function cartesianProduct(arrays) {
+      return arrays.reduce((acc, curr) =>
+        acc.flatMap(a => curr.map(b => [...a, b]))
+      , [[]]);
+    }
+
+    function probabilityOfSuccess(diceSides, modifier, goal, nat1Fail, nat20Success) {
+      const ranges = diceSides.map(s => Array.from({length: s}, (_, i) => i + 1));
+      const allRolls = cartesianProduct(ranges);
+      let success = 0;
+
+      for (const rolls of allRolls) {
+        const rollSum = rolls.reduce((a, b) => a + b, 0) + modifier;
+        if (rollSum >= goal) {
+          if (nat1Fail && rolls.length > 0 && rolls[0] === 1) {
+            // fail
+          } else {
+            success++;
+          }
+        } else {
+          if (nat20Success && rolls.includes(20)) {
+            success++;
+          }
+        }
+      }
+      const totalOutcomes = diceSides.reduce((a, b) => a * b, 1);
+      return totalOutcomes > 0 ? success / totalOutcomes : 0;
+    }
+
+    function getInputs() {
+      return {
+        diceSides: getDiceSides(),
+        modifier: parseInt(document.getElementById('modifier').value) || 0,
+        goal: parseInt(document.getElementById('goal').value) || 0,
+        nat1Fail: document.getElementById('nat1Fail').checked,
+        nat20Success: document.getElementById('nat20Success').checked
+      };
+    }
+
+    function compute() {
+      const {diceSides, modifier, goal, nat1Fail, nat20Success} = getInputs();
+      if (diceSides.length === 0) {
+        document.getElementById('singleResult').innerText = 'Please set at least one die.';
+        return;
+      }
+      const p = probabilityOfSuccess(diceSides, modifier, goal, nat1Fail, nat20Success);
+      document.getElementById('singleResult').innerText =
+        `Chance of success: ${(p * 100).toFixed(2)}%`;
+    }
+
+    function computeMulti() {
+      const {diceSides, modifier, goal, nat1Fail, nat20Success} = getInputs();
+      if (diceSides.length === 0) {
+        document.getElementById('multiResult').innerText = 'Please set at least one die.';
+        return;
+      }
+      const p = probabilityOfSuccess(diceSides, modifier, goal, nat1Fail, nat20Success);
+      const totalAttacks = parseInt(document.getElementById('attacks').value) || 0;
+      const advAttacks = parseInt(document.getElementById('attacksAdv').value) || 0;
+      const disAttacks = parseInt(document.getElementById('attacksDis').value) || 0;
+
+      if (advAttacks + disAttacks > totalAttacks) {
+        document.getElementById('multiResult').innerText =
+          'Error: advantage + disadvantage attacks cannot exceed total attacks.';
+        return;
+      }
+
+      const normalAttacks = totalAttacks - advAttacks - disAttacks;
+      const pNormal = p;
+      const pAdvantage = 1 - Math.pow(1 - p, 2);
+      const pDisadvantage = Math.pow(p, 2);
+
+      const allSuccessProb = Math.pow(pNormal, normalAttacks) *
+                             Math.pow(pAdvantage, advAttacks) *
+                             Math.pow(pDisadvantage, disAttacks);
+
+      document.getElementById('multiResult').innerText =
+        `Chance all attacks succeed: ${(allSuccessProb * 100).toFixed(2)}%`;
+    }
+
+    function resetAll() {
+      document.getElementById('numDice').value = 2;
+      document.getElementById('modifier').value = 0;
+      document.getElementById('goal').value = 15;
+      document.getElementById('nat1Fail').checked = false;
+      document.getElementById('nat20Success').checked = false;
+      document.getElementById('attacks').value = 2;
+      document.getElementById('attacksAdv').value = 0;
+      document.getElementById('attacksDis').value = 0;
+      document.getElementById('singleResult').innerText = '';
+      document.getElementById('multiResult').innerText = '';
+      renderDiceInputs();
+      if (window.history.pushState) {
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.location.search.length > 0) {
+        applyUrlParams();
+      } else {
+        renderDiceInputs();
+      }
+    });
+  </script>
+</body>
+</html>
